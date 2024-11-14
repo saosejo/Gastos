@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { DataTable } from '@/components/DataTable';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,20 @@ import { usePostData, useGetData } from "../../hooks/useApi";
 import { List } from "../../models/List";
 import { Expense } from '@/models/Expense';
 import { User } from '@/models/User';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import { Label } from '@/components/ui/label';
+import { ColumnDef } from "@tanstack/react-table"
+
+interface ExpenseTable {
+    _id: string;
+    name: string;
+    amount: number;
+    category: string;  // Just a string, not an array
+    date: string;
+    createdBy: string;
+    list: string;
+  }
 
 const HomePage: React.FC = () => {
     const router = useRouter();
@@ -30,7 +45,10 @@ const HomePage: React.FC = () => {
     const [expenseCategory, setExpenseCategory] = useState<string>("");
     const [expenseDate, setExpenseDate] = useState<Date | null>(null);
     const [expenseBy, setExpenseBy] = useState<User | null>(null);
+    const [shareEmails, setShareEmails] = useState<string>("");
+    const [isShareModalOpen, setShareModalOpen] = useState(false);
 
+    
     // Custom hooks
     const { data: listsDataResponse } = useGetData<List[]>('list/getlists');
     const { data: createdList, loading: creatingList, error: createListError } = usePostData<List>(
@@ -46,9 +64,24 @@ const HomePage: React.FC = () => {
 
     // Fetch expenses data
     const { data: expensesData } = useGetData<{ _id: string, listId: string, name: string, amount: number, category: string, date: string, createdBy: string }[]>('list/expenses/' + selectedList?._id);
-   
+    const [date, setDate] = React.useState<Date | undefined>(new Date())
     const createdBy = selectedList?.createdBy;
     const sharedUsers = selectedList?.sharedWith?.concat((selectedList?.createdBy ?? []) as User[]);
+
+    const columns: ColumnDef<ExpenseTable>[] = [
+      
+      ];
+
+      const mappedExpenses: ExpenseTable[] = expensesData?.map(expense => ({
+        _id: expense._id,
+        name: expense.name,
+        amount: expense.amount,
+        category: expense.category,  // Just use the string category
+        date: expense.date,
+        createdBy: expense.createdBy,
+        list: expense.listId,  // Ensure the 'list' property is passed correctly
+      })) ?? [];
+
     // Sync lists data when response changes
     useEffect(() => {
         if (listsDataResponse) {
@@ -121,6 +154,24 @@ const HomePage: React.FC = () => {
         setExpenseModalOpen(false); // Close the expense dialog after submitting
     };
 
+    const handleShareList = () => {
+        if (!selectedList || !shareEmails.trim()) return;
+
+        const emails = shareEmails.split(",").map(email => email.trim());
+
+        // Call your API to update the list with shared emails
+        // Example API call:
+        usePostData<List>(
+            `list/share/${selectedList._id}`,
+            { sharedWith: emails },
+            true
+        );
+
+        setShareModalOpen(false);
+        setShareEmails("");
+    };
+
+
     return (
         <div className="">
             <Button onClick={() => setListModalOpen(true)} className=''>Create a new list +</Button>
@@ -166,6 +217,28 @@ const HomePage: React.FC = () => {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={isShareModalOpen} onOpenChange={setShareModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Share List</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        <Input
+                            placeholder="Enter emails, separated by commas"
+                            value={shareEmails}
+                            onChange={(e) => setShareEmails(e.target.value)}
+                        />
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setShareModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleShareList}>Share</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             {/* Expense Creation Dialog */}
             <Dialog open={isExpenseModalOpen} onOpenChange={setExpenseModalOpen}>
                 <DialogContent>
@@ -268,6 +341,74 @@ const HomePage: React.FC = () => {
                     )}
                 </select>
                 <Button className="mt-2" onClick={handleOpenExpenseModal}>Create Expense</Button>
+                <Button className="mt-2" onClick={() => setShareModalOpen(true)}>Share List</Button>
+            </div>
+            <div>
+                <Card>
+                    <CardContent className="pt-6">
+                        <div className="space-y-2">
+                        <Label htmlFor="date" className="shrink-0">
+                            Pick a date
+                        </Label>
+                        <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={setDate}
+                            className="rounded-md border"
+                        />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Active Now
+                    </CardTitle>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      className="h-4 w-4 text-muted-foreground"
+                    >
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">+573</div>
+                    <p className="text-xs text-muted-foreground">
+                      +201 since last hour
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Active Now
+                    </CardTitle>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      className="h-4 w-4 text-muted-foreground"
+                    >
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">+573</div>
+                    <p className="text-xs text-muted-foreground">
+                      +201 since last hour
+                    </p>
+                  </CardContent>
+                </Card>
             </div>
             <div className="mt-4">
                 { (
@@ -276,33 +417,9 @@ const HomePage: React.FC = () => {
                         <div>
                             <pre>{JSON.stringify(expensesData, null, 2)}</pre>
                         </div>
-                        
-                        <table className="w-full border-collapse border border-gray-200">
-            <thead>
-                <tr>
-                    <th className="border border-gray-200 p-2">Name</th>
-                    <th className="border border-gray-200 p-2">Amount</th>
-                    <th className="border border-gray-200 p-2">Category</th>
-                    <th className="border border-gray-200 p-2">Date</th>
-                    <th className="border border-gray-200 p-2">By</th>
-                </tr>
-            </thead>
-            <tbody>
-                {expensesData?.map((expense, index) => (
-                    <tr key={index}>
-                        <td className="border border-gray-200 p-2">{expense.name}</td>
-                        <td className="border border-gray-200 p-2">{expense.amount}</td>
-                        <td className="border border-gray-200 p-2">{expense.category}</td>
-                        <td className="border border-gray-200 p-2">
-                            {expense.date ? new Date(expense.date).toLocaleDateString() : ""}
-                        </td>
-                        <td className="border border-gray-200 p-2">{sharedUsers?.find((user) => user._id === expense.createdBy)?.email}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-)}
+                        <DataTable columns={columns} data={mappedExpenses} />
+                    </div>
+                )}
             </div>
         </div>
     );

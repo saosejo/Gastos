@@ -19,7 +19,7 @@ export default function RootLayout({ children }: Readonly<{
     <SidebarProvider>
       <TopNavBar />
         <AppSidebar />
-        <main className="mt-12 mx-3">
+        <main className="w-full pt-16 px-3">
           {children}
         </main>
     </SidebarProvider>

@@ -202,26 +202,33 @@ const HomePage: React.FC = () => {
         <section className="space-y-4">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-semibold">Expense Tracker</h1>
-                <Button onClick={() => setListModalOpen(true)}>+ Create New List</Button>
             </div>
 
 
 
-            <div className="flex gap-4">
-                <select
-                    className="w-full border rounded p-2"
-                    value={selectedList?._id}
-                    onChange={(e) =>
-                        setSelectedList(listsData?.find((list) => list._id === e.target.value) ?? null)
-                    }
-                >
-                    <option hidden>Select a list</option>
-                    {listsData?.map((list) => (
-                        <option key={list._id} value={list._id}>
-                            {list.name}
-                        </option>
-                    ))}
-                </select>
+            <div className="columns-2">
+                <div>
+                    <label className="text-xs">Select a List</label>
+                    <select
+                        className="w-full border rounded p-2"
+                        value={selectedList?._id}
+                        onChange={(e) =>
+                            setSelectedList(listsData?.find((list) => list._id === e.target.value) ?? null)
+                        }
+                    >
+                        <option hidden>Select a list</option>
+                        {listsData?.map((list) => (
+                            <option key={list._id} value={list._id}>
+                                {list.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <Button onClick={() => setListModalOpen(true)}>+ Create List</Button>
+                </div>
+            </div>
+            <div className="columns-2xs">
                 <Button onClick={handleOpenExpenseModal}>+ Add Expense</Button>
                 <Button onClick={() => setShareModalOpen(true)}>Share List</Button>
             </div>

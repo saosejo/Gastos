@@ -201,13 +201,10 @@ const HomePage: React.FC = () => {
         {/* List Actions */}
         <section className="space-y-4">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-semibold">Expense Tracker</h1>
+                <h1 className="text-2xl font-semibold">Lists</h1>
             </div>
-
-
-
-            <div className="columns-2">
-                <div>
+            <div className="flex justify-between h-full">
+                <div className='flex-2'>
                     <label className="text-xs">Select a List</label>
                     <select
                         className="w-full border rounded p-2"
@@ -224,7 +221,7 @@ const HomePage: React.FC = () => {
                         ))}
                     </select>
                 </div>
-                <div>
+                <div className='mt-auto flex-1 ml-2'>
                     <Button onClick={() => setListModalOpen(true)}>+ Create List</Button>
                 </div>
             </div>

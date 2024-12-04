@@ -5,37 +5,16 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { usePostData, useGetData } from "../../hooks/useApi";
 import { List } from "../../models/List";
+import ListItem from '@/components/ListItem';
 
 const Lists = () => {
     const [listsData, setListsData] = useState<List[] | null>(null);
-    const [expenseTotals, setExpenseTotals] = useState<{ [listId: string]: number }>({});
 
     const { data: listsDataResponse } = useGetData<List[]>('list/getlists');
-
-    // Fetch expenses for each list
+ 
     useEffect(() => {
         if (listsDataResponse) {
             setListsData(listsDataResponse);
-
-            // Fetch all expenses in parallel
-            const fetchExpensesPromises = listsDataResponse.map(async (list) => {
-                const { data: expenses } = await useGetData<{ _id: string, listId: string, name: string, amount: number, category: string, date: string, createdBy: string }[]>(
-                    `list/expenses/${list._id}`
-                );
-                console.log(`Expenses for list ${list._id}:`, expenses);
-                const total = expenses?.reduce((sum, expense) => sum + expense.amount, 0) || 0;
-
-                return { listId: list._id, total };
-            });
-
-            // Wait for all expense data and update totals
-            Promise.all(fetchExpensesPromises).then((totals) => {
-                const expenseTotalsMap = totals.reduce((acc, { listId, total }) => {
-                    acc[listId] = total;
-                    return acc;
-                }, {} as Record<string, number>);
-                setExpenseTotals(expenseTotalsMap);
-            });
         }
     }, [listsDataResponse]);
 
@@ -56,10 +35,10 @@ const Lists = () => {
                     </div>
                     <Button className="text-white">Share</Button>
                 </div>
+                
                 {listsData?.map((list) => (
                     <div key={list._id} className="p-4 mb-4 bg-white rounded shadow">
-                        <h3 className="font-bold">{list.name}</h3>
-                        <p>Total Expenses: ${expenseTotals[list._id] || 0}</p>
+                        <ListItem list={list} />
                     </div>
                 ))}
             </div>
